@@ -4,6 +4,7 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret")
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
@@ -64,6 +65,7 @@ TIME_ZONE = "Europe/Moscow"
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"   # папка, куда collectstatic всё сложит
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
