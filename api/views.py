@@ -67,20 +67,20 @@ class LoginView(APIView):
         # если хочешь хранить refresh в cookie (рекомендовано)
         set_refresh_cookie(resp, refresh_token)
         return resp
-
+    
 class RefreshView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        token = request.COOKIES.get("refresh")
+        token = request.COOKIES.get("refresh") or (request.data or {}).get("refreshToken")
         if not token:
             return Response({"message": "Нет refresh-токена"}, status=401)
         try:
             refresh = RefreshToken(token)
             access = str(refresh.access_token)
+            return Response({"accessToken": access}, status=200)
         except Exception:
             return Response({"message": "Неверный refresh-токен"}, status=401)
-        return Response({"accessToken": access}, status=200)
 
 class LogoutView(APIView):
     permission_classes = [permissions.AllowAny]

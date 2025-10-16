@@ -37,11 +37,36 @@ MIDDLEWARE = [
 # Разреши фронту доступ
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
     "http://localhost:3000",
-    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    "https://aristokrat-app.netlify.app",
 ]
-CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://aristokrat-app.netlify.app",
+]
+
+# По желанию, но полезно:
+CORS_ALLOW_HEADERS = list(sorted(set([
+    "authorization", "content-type", "accept", "origin",
+    "x-csrftoken", "x-requested-with",
+])))
+CORS_EXPOSE_HEADERS = ["Content-Type", "Authorization"]
+
+# === Cookies для кросс-домена ===
+# Для production (https) » True / "None". На localhost по http "None" не работает;
+# поэтому: в DEV можно СДЕЛАТЬ fallback: если DEBUG=True, то Lax+False.
+if DEBUG:
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SAMESITE = "Lax"
+    CSRF_COOKIE_SAMESITE = "Lax"
+else:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SAMESITE = "None"
+    CSRF_COOKIE_SAMESITE = "None"
 
 ROOT_URLCONF = "aristokrat_backend.urls"
 TEMPLATES = [{
@@ -77,12 +102,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
 }
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
-    "AUTH_COOKIE": "refresh",        # имя cookie для refresh
-    "AUTH_COOKIE_SECURE": False,     # True на проде (https)
+    "AUTH_COOKIE": "refresh",           # имя cookie
+    "AUTH_COOKIE_SECURE": not DEBUG,    # True на https
     "AUTH_COOKIE_HTTP_ONLY": True,
-    "AUTH_COOKIE_SAMESITE": "Lax",
+    "AUTH_COOKIE_SAMESITE": "None" if not DEBUG else "Lax",
 }
