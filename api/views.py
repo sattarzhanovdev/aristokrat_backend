@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.hashers import check_password
+from rest_framework.permissions import IsAdminUser
 
 from .models import House, Entrance, Apartment, Device, ResidentProfile
 from .serializers import (
@@ -119,6 +120,34 @@ class ApartmentViewSet(viewsets.ModelViewSet):
     serializer_class = ApartmentSerializer
     pagination_class = ApartmentPagination
 
+    @action(detail=True, methods=["patch"], url_path="accept", permission_classes=[IsAdminUser])
+    def accept(self, request, pk=None):
+        ap = self.get_object()
+        house = ap.entrance.house.number
+        entrance = ap.entrance.number
+        number = ap.number
+
+        updated = ResidentProfile.objects.filter(
+            house_number=house,
+            entrance_no=entrance,
+            apartment_no=number
+        ).update(approval_status="accepted")
+        return Response({"updated_profiles": updated, "approval_status": "accepted"})
+
+    @action(detail=True, methods=["patch"], url_path="reject", permission_classes=[IsAdminUser])
+    def reject(self, request, pk=None):
+        ap = self.get_object()
+        house = ap.entrance.house.number
+        entrance = ap.entrance.number
+        number = ap.number
+
+        updated = ResidentProfile.objects.filter(
+            house_number=house,
+            entrance_no=entrance,
+            apartment_no=number
+        ).update(approval_status="not_accepted")
+        return Response({"updated_profiles": updated, "approval_status": "not_accepted"})
+    
     def get_permissions(self):
         if self.action in ["block", "partial_update", "create", "update", "destroy"]:
             return [permissions.IsAdminUser()]
