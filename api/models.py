@@ -90,27 +90,53 @@ User = get_user_model()
 MAX_ENTRANCES = 8  # подъезды 1..8
 
 class ResidentProfile(models.Model):
+    class ApprovalStatus(models.TextChoices):
+        ACCEPTED = "accepted", "Принят"
+        NOT_ACCEPTED = "not_accepted", "Не принят"
+
+    class PasswordStatus(models.TextChoices):
+        UPDATED = "updated", "Обновлен"
+        NOT_UPDATED = "not_updated", "Не обновлен"
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="resident")
 
-    # что просил: блок (дом), подъезд, квартира, номер машины
-    house_number   = models.PositiveIntegerField(null=True, blank=True, help_text="Блок/дом, напр. 18 или 20")
-    entrance_no    = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Подъезд 1..8")
-    apartment_no   = models.CharField(max_length=10, blank=True, help_text="Номер квартиры, например 001 или 12")
-    car_number     = models.CharField(max_length=32, blank=True, help_text="Госномер авто")
+    # Статусы
+    approval_status = models.CharField(
+        max_length=20,
+        choices=ApprovalStatus.choices,
+        default=ApprovalStatus.NOT_ACCEPTED,
+        db_index=True,
+        verbose_name="Статус модерации",
+        help_text="Принят / Не принят",
+    )
+    password_status = models.CharField(
+        max_length=20,
+        choices=PasswordStatus.choices,
+        default=PasswordStatus.NOT_UPDATED,
+        db_index=True,
+        verbose_name="Статус пароля",
+        help_text="Обновлен / Не обновлен",
+    )
 
-    # доп. поля, если пригодятся
-    phone          = models.CharField(max_length=32, blank=True)
+    # что просил: блок (дом), подъезд, квартира, номер машины
+    house_number = models.PositiveIntegerField(null=True, blank=True, help_text="Блок/дом, напр. 18 или 20")
+    entrance_no  = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Подъезд 1..8")
+    apartment_no = models.CharField(max_length=10, blank=True, help_text="Номер квартиры, например 001 или 12")
+    car_number   = models.CharField(max_length=32, blank=True, help_text="Госномер авто")
+
+    # доп. поля
+    phone = models.CharField(max_length=32, blank=True)
     is_active_resident = models.BooleanField(default=True)
 
-    updated_at     = models.DateTimeField(auto_now=True)
-    created_at     = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = "Профиль жильца"
         verbose_name_plural = "Профили жильцов"
 
     def __str__(self):
-        return f"Профиль {self.user}"
+        return f"Профиль {self.user} • {self.get_approval_status_display()} • {self.get_password_status_display()}"
 
     def clean(self):
         if self.entrance_no is not None and not (1 <= int(self.entrance_no) <= MAX_ENTRANCES):

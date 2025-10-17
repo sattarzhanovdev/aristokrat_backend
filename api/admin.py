@@ -79,3 +79,27 @@ class UserAdmin(BaseUserAdmin):
 # пере-регистрируем User с inline
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
+
+@admin.register(ResidentProfile)
+class ResidentProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "approval_status", "password_status", "house_number", "entrance_no", "apartment_no", "is_active_resident", "updated_at")
+    list_filter  = ("approval_status", "password_status", "is_active_resident", "house_number", "entrance_no")
+    search_fields = ("user__username", "user__email", "apartment_no", "car_number", "phone")
+
+    actions = ["mark_approved", "mark_not_approved", "mark_pwd_updated", "mark_pwd_not_updated"]
+
+    @admin.action(description="Отметить как Принят")
+    def mark_approved(self, request, qs):
+        qs.update(approval_status=ResidentProfile.ApprovalStatus.ACCEPTED)
+
+    @admin.action(description="Отметить как Не принят")
+    def mark_not_approved(self, request, qs):
+        qs.update(approval_status=ResidentProfile.ApprovalStatus.NOT_ACCEPTED)
+
+    @admin.action(description="Пароль: Обновлен")
+    def mark_pwd_updated(self, request, qs):
+        qs.update(password_status=ResidentProfile.PasswordStatus.UPDATED)
+
+    @admin.action(description="Пароль: Не обновлен")
+    def mark_pwd_not_updated(self, request, qs):
+        qs.update(password_status=ResidentProfile.PasswordStatus.NOT_UPDATED)
