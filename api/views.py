@@ -19,7 +19,16 @@ from .serializers import (
 
 from django.contrib.auth import get_user_model
 
+from rest_framework.permissions import IsAuthenticated
 # ---- AUTH ----
+
+try:
+    from rest_framework_simplejwt.authentication import JWTAuthentication
+    AUTHN = [JWTAuthentication]
+except Exception:
+    from rest_framework.authentication import SessionAuthentication
+    AUTHN = [SessionAuthentication]
+
 
 def set_refresh_cookie(response, refresh):
     # httpOnly cookie
@@ -93,6 +102,8 @@ class LogoutView(APIView):
         return resp
 
 class MeView(APIView):
+    authentication_classes = AUTHN
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         return Response(UserSerializer(request.user).data)
 
@@ -219,6 +230,7 @@ class DeviceGlobalView(APIView):
 User = get_user_model()
 
 class ProfileMeView(APIView):
+    authentication_classes = AUTHN
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -241,7 +253,8 @@ class ProfileMeView(APIView):
     
 
 class PasswordStatusView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = AUTHN
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         try:
             status_str = request.user.resident.password_status
@@ -250,7 +263,8 @@ class PasswordStatusView(APIView):
         return Response({"status": status_str})
 
 class ChangePasswordView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = AUTHN
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         old = request.data.get("old_password") or ""
         new = request.data.get("new_password") or ""
@@ -272,3 +286,16 @@ class ChangePasswordView(APIView):
             pass
 
         return Response({"status": "updated"})
+    
+    
+
+
+class ApprovalStatusView(APIView):
+    authentication_classes = AUTHN
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        try:
+            status_str = request.user.resident.approval_status
+        except ResidentProfile.DoesNotExist:
+            status_str = "accepted"
+        return Response({"status": status_str})
