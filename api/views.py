@@ -8,8 +8,10 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.hashers import check_password
 
-from .models import House, Entrance, Apartment, Device
+from .models import House, Entrance, Apartment, Device, ResidentProfile
 from .serializers import (
     UserSerializer, HouseSerializer, EntranceSerializer,
     ApartmentSerializer, ApartmentListSerializer, ProfileMeSerializer
@@ -236,3 +238,37 @@ class ProfileMeView(APIView):
             ser.save()
             return Response(ser.data)
         return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class PasswordStatusView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request):
+        try:
+            status_str = request.user.resident.password_status
+        except ResidentProfile.DoesNotExist:
+            status_str = "updated"  # по умолчанию
+        return Response({"status": status_str})
+
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def post(self, request):
+        old = request.data.get("old_password") or ""
+        new = request.data.get("new_password") or ""
+        user = request.user
+        if not check_password(old, user.password):
+            return Response({"detail": "Неверный текущий пароль"}, status=400)
+        if len(new) < 8:
+            return Response({"detail": "Пароль должен быть не короче 8 символов"}, status=400)
+
+        user.set_password(new)
+        user.save()
+        update_session_auth_hash(request, user)  # не вылогинивать
+
+        try:
+            prof = user.resident
+            prof.password_status = "updated"
+            prof.save(update_fields=["password_status", "updated_at"])
+        except ResidentProfile.DoesNotExist:
+            pass
+
+        return Response({"status": "updated"})
