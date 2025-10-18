@@ -35,18 +35,77 @@ class EntranceSerializer(serializers.ModelSerializer):
         model = Entrance
         fields = ("id", "number", "house", "house_id")
 
-class ApartmentSerializer(serializers.ModelSerializer):
-    entrance_id = serializers.PrimaryKeyRelatedField(
-        write_only=True, queryset=Entrance.objects.all(), source="entrance"
-    )
+def _find_phone_for_apartment(apartment: Apartment) -> str:
+    """
+    Ищем телефон по профилю жильца по связке:
+      house_number == entrance.house.number
+      entrance_no  == entrance.number
+      apartment_no == apartment.number
+    Берём самый свежий профиль с непустым телефоном.
+    """
+    try:
+        return (
+            ResidentProfile.objects
+            .filter(
+                house_number=apartment.entrance.house.number,
+                entrance_no=apartment.entrance.number,
+                apartment_no=apartment.number,
+                is_active_resident=True,
+            )
+            .exclude(phone__isnull=True)
+            .exclude(phone__exact="")
+            .order_by("-updated_at")
+            .values_list("phone", flat=True)
+            .first()
+        ) or ""
+    except Exception:
+        return ""
+
+# --- СПИСОЧНЫЙ СЕРИАЛАЙЗЕР ---
+
+class ApartmentListSerializer(serializers.ModelSerializer):
     entrance = EntranceSerializer(read_only=True)
+    phone = serializers.SerializerMethodField()
 
     class Meta:
         model = Apartment
-        fields = (
-            "id", "number", "owner_name", "is_blocked",
-            "note", "entrance", "entrance_id", "created_at", "updated_at", "phone"
-        )
+        fields = [
+            "id",
+            "number",
+            "owner_name",
+            "is_blocked",
+            "note",
+            "entrance",
+            "created_at",
+            "updated_at",
+            "phone",             # ← добавили
+        ]
+
+    def get_phone(self, obj: Apartment) -> str:
+        return _find_phone_for_apartment(obj)
+
+# --- ДЕТАЛЬНЫЙ СЕРИАЛАЙЗЕР ---
+
+class ApartmentSerializer(serializers.ModelSerializer):
+    entrance = EntranceSerializer(read_only=True)
+    phone = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Apartment
+        fields = [
+            "id",
+            "number",
+            "owner_name",
+            "is_blocked",
+            "note",
+            "entrance",
+            "created_at",
+            "updated_at",
+            "phone",             # ← добавили
+        ]
+
+    def get_phone(self, obj: Apartment) -> str:
+        return _find_phone_for_apartment(obj)
 
 class ApartmentListSerializer(serializers.ModelSerializer):
     class Meta:
