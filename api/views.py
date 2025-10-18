@@ -105,9 +105,14 @@ class LogoutView(APIView):
 class MeView(APIView):
     authentication_classes = AUTHN
     permission_classes = [IsAuthenticated]
-    def get(self, request):
-        return Response(UserSerializer(request.user).data)
 
+    def get(self, request):
+        data = UserSerializer(request.user).data
+        user = request.user
+        data.update({
+            "adminFlag": bool(user.is_superuser or user.is_staff),
+        })
+        return Response(data)
 # ---- DATA ----
 
 class ApartmentPagination(PageNumberPagination):

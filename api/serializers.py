@@ -6,9 +6,19 @@ from django.contrib.auth import get_user_model
 UserData = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
+    adminFlag = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ("id", "username", "email", "is_staff", "first_name", "last_name")
+        fields = [
+            "id","username","first_name","last_name","email",
+            "house_number","entrance_no","apartment_no","car_number","phone",
+            "status",
+            "adminFlag",           # ← новое поле
+        ]
+
+    def get_adminFlag(self, obj):
+        return bool(obj.is_superuser or obj.is_staff)
 
 class HouseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,7 +45,7 @@ class ApartmentSerializer(serializers.ModelSerializer):
         model = Apartment
         fields = (
             "id", "number", "owner_name", "is_blocked",
-            "note", "entrance", "entrance_id", "created_at", "updated_at"
+            "note", "entrance", "entrance_id", "created_at", "updated_at", "phone"
         )
 
 class ApartmentListSerializer(serializers.ModelSerializer):
