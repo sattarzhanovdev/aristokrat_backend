@@ -35,77 +35,70 @@ class EntranceSerializer(serializers.ModelSerializer):
         model = Entrance
         fields = ("id", "number", "house", "house_id")
 
-def _find_phone_for_apartment(apartment: Apartment) -> str:
-    """
-    Ищем телефон по профилю жильца по связке:
-      house_number == entrance.house.number
-      entrance_no  == entrance.number
-      apartment_no == apartment.number
-    Берём самый свежий профиль с непустым телефоном.
-    """
-    try:
-        return (
-            ResidentProfile.objects
-            .filter(
-                house_number=apartment.entrance.house.number,
-                entrance_no=apartment.entrance.number,
-                apartment_no=apartment.number,
-                is_active_resident=True,
-            )
-            .exclude(phone__isnull=True)
-            .exclude(phone__exact="")
-            .order_by("-updated_at")
-            .values_list("phone", flat=True)
-            .first()
-        ) or ""
-    except Exception:
-        return ""
-
-# --- СПИСОЧНЫЙ СЕРИАЛАЙЗЕР ---
-
-class ApartmentListSerializer(serializers.ModelSerializer):
-    entrance = EntranceSerializer(read_only=True)
-    phone = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Apartment
-        fields = [
-            "id",
-            "number",
-            "owner_name",
-            "is_blocked",
-            "note",
-            "entrance",
-            "created_at",
-            "updated_at",
-            "phone",             # ← добавили
-        ]
-
-    def get_phone(self, obj: Apartment) -> str:
-        return _find_phone_for_apartment(obj)
-
-# --- ДЕТАЛЬНЫЙ СЕРИАЛАЙЗЕР ---
-
 class ApartmentSerializer(serializers.ModelSerializer):
+    entrance_id = serializers.PrimaryKeyRelatedField(
+        write_only=True, queryset=Entrance.objects.all(), source="entrance"
+    )
     entrance = EntranceSerializer(read_only=True)
-    phone = serializers.SerializerMethodField()
+
+    # ← ДОБАВИЛИ: phone как вычисляемое поле
+    phone = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Apartment
-        fields = [
-            "id",
-            "number",
-            "owner_name",
-            "is_blocked",
-            "note",
-            "entrance",
-            "created_at",
-            "updated_at",
-            "phone",             # ← добавили
-        ]
+        fields = (
+            "id", "number", "owner_name", "is_blocked",
+            "note", "entrance", "entrance_id",
+            "created_at", "updated_at",
+            "phone",  # важно, чтобы было в fields
+        )
 
     def get_phone(self, obj: Apartment) -> str:
-        return _find_phone_for_apartment(obj)
+        """
+        Ищем телефон в ResidentProfile по связке:
+          house_number == obj.entrance.house.number
+          entrance_no  == obj.entrance.number
+          apartment_no == obj.number  (с учётом ведущих нулей)
+          is_active_resident == True
+        Берём самый свежий непустой телефон.
+        """
+        try:
+            house_no = obj.entrance.house.number
+            entr_no  = obj.entrance.number
+
+            # нормализуем номера квартир: '001' и '1' считаем одинаковыми
+            apt_num = (obj.number or "").strip()
+            apt_num_norm = apt_num.lstrip("0") or "0"
+
+            qs = (
+                ResidentProfile.objects
+                .filter(
+                    house_number=house_no,
+                    entrance_no=entr_no,
+                )
+                .exclude(phone__isnull=True)
+                .exclude(phone__exact="")
+                .order_by("-updated_at")
+            )
+
+            # сначала пробуем точное совпадение
+            p = qs.filter(apartment_no=apt_num).values_list("phone", flat=True).first()
+            if p:
+                return p
+
+            # затем — совпадение по нормализованному номеру
+            p = (
+                qs.extra(  # простой способ нормализации без функций БД
+                    where=["TRIM(LEADING '0' FROM apartment_no) = %s"],
+                    params=[apt_num_norm],
+                )
+                .values_list("phone", flat=True)
+                .first()
+            )
+            return p or ""
+        except Exception:
+            return ""
+
 
 class ApartmentListSerializer(serializers.ModelSerializer):
     class Meta:
