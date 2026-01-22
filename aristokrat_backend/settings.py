@@ -93,20 +93,7 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"   # папка, куда collectstatic всё сложит
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.AllowAny",
     ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 50,
-}
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
-    "AUTH_COOKIE": "refresh",           # имя cookie
-    "AUTH_COOKIE_SECURE": not DEBUG,    # True на https
-    "AUTH_COOKIE_HTTP_ONLY": True,
-    "AUTH_COOKIE_SAMESITE": "None" if not DEBUG else "Lax",
 }
