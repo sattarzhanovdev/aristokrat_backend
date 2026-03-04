@@ -10,6 +10,7 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -96,4 +97,71 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
     ],
+}
+
+# ============= JAZZMIN CONFIG =============
+JAZZMIN_SETTINGS = {
+    "site_title": "Аристократ",
+    "site_header": "Аристократ - Администрация",
+    "site_brand": "Аристократ",
+    "site_logo": None,
+    "welcome_sign": "Добро пожаловать в панель администратора",
+    "copyright": "Аристократ © 2024-2025",
+    
+    # Цветовая схема
+    "topmenu_links": [],
+    
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    
+    # Боковое меню
+    "order_with_respect_to": [
+        "api",
+        "api.SimpleUser",
+        "api.ResidentProfile",
+        "api.House",
+        "api.Entrance",
+        "api.Apartment",
+        "api.Device",
+    ],
+    
+    # Кастомизация
+    "icons": {
+        "auth": "fas fa-user-shield",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        
+        "api.SimpleUser": "fas fa-users",
+        "api.ResidentProfile": "fas fa-home",
+        "api.House": "fas fa-building",
+        "api.Entrance": "fas fa-door-open",
+        "api.Apartment": "fas fa-door-closed",
+        "api.Device": "fas fa-microchip",
+    },
+    
+    "default_icon_parents": "fas fa-chevron-right",
+    "default_icon_children": "fas fa-arrow-right",
+    
+    # Темы
+    "theme": "darkly",
+    
+    # Колонки в листе
+    "list_per_page": 25,
+    
+    # Язык
+    "language_code": "ru",
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small": False,
+    "footer_small": False,
+    "body_small": False,
+    "sign_in_page_template": None,
+    "welcome_sign": "Добро пожаловать",
+    "login_logo": None,
+    "login_logo_path": None,
+    "admin_header_small": False,
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_auto_expand": False,
+    "related_modal_theme": "dark",
 }
