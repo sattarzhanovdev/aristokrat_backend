@@ -38,6 +38,7 @@ class SimpleUserSerializer(serializers.ModelSerializer):
             "name",
             "role",
             "is_active",
+            "has_parking",
 
             # профиль
             "approval_status",
