@@ -33,16 +33,16 @@ class ResidentProfileInline(admin.StackedInline):
 
 @admin.register(SimpleUser)
 class SimpleUserAdmin(admin.ModelAdmin):
-    list_display = ("id", "login", "name", "role", "is_active", "created_at")
+    list_display = ("id", "login", "name", "role", "is_active", "has_parking", "created_at")
     search_fields = ("login", "name")
-    list_filter = ("role", "is_active")
+    list_filter = ("role", "is_active", "has_parking")
     ordering = ("id",)
 
     inlines = (ResidentProfileInline,)
 
     fieldsets = (
         (None, {
-            "fields": ("login", "password", "name", "role", "is_active")
+            "fields": ("login", "password", "name", "role", "is_active", "has_parking")
         }),
     )
 
