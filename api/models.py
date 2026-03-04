@@ -14,6 +14,7 @@ class SimpleUser(models.Model):
         default="resident"
     )
     is_active = models.BooleanField(default=True)
+    has_parking = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -36,7 +37,6 @@ class ResidentProfile(models.Model):
     apartment_no = models.CharField(max_length=10, blank=True)
     car_number = models.CharField(max_length=32, blank=True)
     phone = models.CharField(max_length=32, blank=True)
-    has_parking = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
