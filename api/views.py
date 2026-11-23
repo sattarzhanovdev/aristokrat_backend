@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status, generics, viewsets
 from rest_framework.pagination import PageNumberPagination
 
+from billing.auth import issue_token
+from billing.models import BillingState
+
 from .models import (
     SimpleUser, House, Entrance, Apartment, Device
 )
@@ -31,7 +34,12 @@ class LoginView(APIView):
         if not user:
             return Response({"message": "Неверный логин или пароль"}, status=401)
 
-        return Response(SimpleUserSerializer(user).data)
+        data = SimpleUserSerializer(user).data
+        # токен для защищённых API (счета, админ-панель) и сводка по счетам:
+        # приложение по ней решает, показывать ли экран блокировки
+        data["token"] = issue_token(user)
+        data["billing"] = BillingState(user).as_dict()
+        return Response(data)
 
 
 # ---------- APARTMENTS ----------

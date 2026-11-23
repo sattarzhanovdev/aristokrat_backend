@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "corsheaders",
     # local
     "api",
+    "billing",
 ]
 
 MIDDLEWARE = [
@@ -83,11 +84,11 @@ TEMPLATES = [{
 }]
 WSGI_APPLICATION = "aristokrat_backend.wsgi.application"
 
-DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
+DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": os.getenv("DJANGO_DB_PATH") or BASE_DIR / "db.sqlite3"}}
 
 AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = "ru-ru"
-TIME_ZONE = "Europe/Moscow"
+TIME_ZONE = "Asia/Bishkek"  # сроки оплаты и блокировка считаются по местному времени ЖК
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
@@ -165,3 +166,23 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar_disable_auto_expand": False,
     "related_modal_theme": "dark",
 }
+
+
+# ---------- Счета и оплаты ----------
+# Валюта счетов (ISO-код) и как её показывать людям.
+BILLING_CURRENCY = os.getenv("BILLING_CURRENCY", "KGS")
+BILLING_CURRENCY_LABEL = os.getenv("BILLING_CURRENCY_LABEL", "сом")
+# Онлайн-оплата: "" — выключена (только отметка админом), "demo" — тестовая страница
+# оплаты БЕЗ списания денег (житель сможет «оплатить» сам — только для проверки!).
+# Сюда же подставляется код реального провайдера, когда он будет подключён.
+BILLING_PROVIDER = os.getenv("BILLING_PROVIDER", "")
+# Куда вернуть жителя после оплаты, если приложение не передало свой адрес.
+BILLING_RETURN_URL = os.getenv("BILLING_RETURN_URL", "https://aristokrat-app.netlify.app/bills")
+BILLING_EXTRA_RETURN_ORIGINS = ["capacitor://localhost", "http://localhost"]
+BILLING_SUPPORT_PHONE = os.getenv("BILLING_SUPPORT_PHONE", "")
+# Служебные аккаунты (мусоровоз и т.п.): номер «квартиры» 10000. Массовые счета
+# («всем», «всем с паркингом») им не выставляются; выбрать вручную можно.
+BILLING_SERVICE_APARTMENTS = ["10000"]
+# Если житель нажал «Оплатить» повторно, пока прошлая попытка ещё открыта,
+# отдаём ту же ссылку, чтобы не было двух списаний за один счёт.
+BILLING_PENDING_REUSE_MINUTES = 15

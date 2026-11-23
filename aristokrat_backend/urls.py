@@ -19,5 +19,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('billing.urls')),  # счета и админ-панель (до api: там есть catch-all /api/<kind>/)
     path('', include('api.urls')),  # Подключаем маршруты из приложения api
 ]
