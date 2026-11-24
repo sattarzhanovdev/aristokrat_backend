@@ -42,11 +42,13 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://aristokrat-app.netlify.app",
+    "https://dev--aristokrat-app.netlify.app",  # тестовая сборка ветки dev
 ]
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://aristokrat-app.netlify.app",
+    "https://dev--aristokrat-app.netlify.app",  # тестовая сборка ветки dev
 ]
 
 # По желанию, но полезно:
